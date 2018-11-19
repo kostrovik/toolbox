@@ -1,5 +1,6 @@
 package com.github.kostrovik.toolbox.models;
 
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -73,5 +74,20 @@ public class Version implements Comparable<Version> {
     @Override
     public String toString() {
         return String.format("%d.%d.%d", major, minor, patch);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Version)) return false;
+        Version version = (Version) o;
+        return major == version.major &&
+                minor == version.minor &&
+                patch == version.patch;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(major, minor, patch);
     }
 }

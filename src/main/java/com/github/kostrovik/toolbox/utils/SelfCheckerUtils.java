@@ -22,12 +22,6 @@ import java.util.logging.Logger;
  */
 public class SelfCheckerUtils {
     private static Logger logger = ApplicationLogger.getLogger(SelfCheckerUtils.class.getName());
-    private Path versionFile;
-    private DirectoryUtils directoryUtils;
-
-    public SelfCheckerUtils() {
-        this.directoryUtils = new DirectoryUtils();
-    }
 
     /**
      * Ищет в корне приложения файл с версией. В случае если такой файл найден то читает из него первую строку.
@@ -43,7 +37,7 @@ public class SelfCheckerUtils {
      * @throws URISyntaxException the uri syntax exception
      */
     public boolean amIActual(Version actualVersion) throws URISyntaxException {
-        versionFile = getVersionFilePath();
+        Path versionFile = getVersionFilePath();
         if (Objects.nonNull(versionFile) && Files.exists(versionFile)) {
             try (BufferedReader reader = Files.newBufferedReader(versionFile, Charset.forName("UTF-8"))) {
                 String versionLine = reader.readLine();

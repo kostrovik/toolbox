@@ -21,43 +21,50 @@ import java.util.logging.Logger;
  * github:  https://github.com/kostrovik/toolbox
  */
 public class ApplicationLogger {
-    private static volatile FileHandler FILE_HANDLER;
+    private static volatile FileHandler fileHandler;
+
+    private ApplicationLogger() {
+
+    }
 
     public static Logger getLogger(String name) {
         Logger logger = Logger.getLogger(name);
 
-        createLoggerFile();
+        try {
+            createLoggerFile();
+        } catch (IOException | URISyntaxException e) {
+            logger.log(Level.SEVERE, "Ошибка создания файла для логирования.", e);
+        }
+
 
         logger.setUseParentHandlers(false);
         logger.setLevel(Level.ALL);
-        logger.addHandler(FILE_HANDLER);
+        logger.addHandler(fileHandler);
 
         return logger;
     }
 
-    private static void createLoggerFile() {
-        if (FILE_HANDLER == null) {
+    private static void createLoggerFile() throws IOException, URISyntaxException {
+        if (fileHandler == null) {
             synchronized (ApplicationLogger.class) {
-                if (FILE_HANDLER == null) {
-                    try {
-                        URI applicationDirectory = ApplicationLogger.class.getProtectionDomain().getCodeSource().getLocation().toURI();
+                if (fileHandler == null) {
+                    URI applicationDirectory = ApplicationLogger.class.getProtectionDomain().getCodeSource().getLocation().toURI();
 
-                        if (Paths.get(applicationDirectory).getParent().toString().equals("/")) {
-                            applicationDirectory = URI.create(System.getProperty("java.home"));
-                        }
-
-                        Path logPath = Paths.get(applicationDirectory.getPath() + "/logs", String.format("%s.log", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))));
-
-                        if (Files.notExists(logPath.getParent())) {
-                            Files.createDirectory(logPath.getParent());
-                        }
-
-                        FILE_HANDLER = new FileHandler(logPath.toString(), true);
-                        FILE_HANDLER.setLevel(Level.ALL);
-                        FILE_HANDLER.setFormatter(new LogMessageFormatter());
-                    } catch (IOException | URISyntaxException e) {
-                        e.printStackTrace();
+                    if (Paths.get(applicationDirectory).getParent().toString().equals("/")) {
+                        applicationDirectory = URI.create(System.getProperty("java.home"));
+                    } else {
+                        applicationDirectory = Paths.get(applicationDirectory).getParent().toUri();
                     }
+
+                    Path logPath = Paths.get(applicationDirectory.getPath() + "/update_logs", String.format("%s.log", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))));
+
+                    if (Files.notExists(logPath.getParent())) {
+                        Files.createDirectory(logPath.getParent());
+                    }
+
+                    fileHandler = new FileHandler(logPath.toString(), true);
+                    fileHandler.setLevel(Level.ALL);
+                    fileHandler.setFormatter(new LogMessageFormatter());
                 }
             }
         }

@@ -10,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Comparator;
 import java.util.Objects;
 import java.util.logging.Level;
@@ -116,5 +117,19 @@ public class DirectoryUtils {
             logger.log(Level.SEVERE, "Ошибка поиска директории с версиями приложения.", e);
         }
         return null;
+    }
+
+    public void setPermissionsOnDirectory(Path directory, String pasixPermissions) {
+        try (Stream<Path> testDir = Files.list(directory)) {
+            testDir.forEach(path -> {
+                try {
+                    Files.setPosixFilePermissions(path, PosixFilePermissions.fromString(pasixPermissions));
+                } catch (IOException e) {
+                    logger.log(Level.SEVERE, "Ошибка установки прав для файла. ", e);
+                }
+            });
+        } catch (IOException e) {
+            logger.log(Level.SEVERE, "Ошибка чтения директории. ", e);
+        }
     }
 }

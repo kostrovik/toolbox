@@ -4,6 +4,7 @@ import com.github.kostrovik.http.client.common.HttpClient;
 import com.github.kostrovik.http.client.common.HttpClientAnswer;
 import com.github.kostrovik.http.client.common.HttpRequest;
 import com.github.kostrovik.http.client.interfaces.Listener;
+import com.github.kostrovik.toolbox.interfaces.Callable;
 import com.github.kostrovik.toolbox.models.Version;
 import com.github.kostrovik.toolbox.utils.ApplicationLogger;
 import com.github.kostrovik.toolbox.utils.DirectoryUtils;
@@ -57,7 +58,7 @@ public class LaunchUtils {
         this.downloadVersionApi = downloadVersionApi;
     }
 
-    public void checkVersion() throws IOException {
+    public void checkVersion(Callable callback) throws IOException {
         actualVersion = getActualVersion();
         boolean normalLaunch = false;
         try {
@@ -74,6 +75,8 @@ public class LaunchUtils {
                 launchApplication(appDir);
                 System.exit(0);
             }
+        } else {
+            callback.call();
         }
     }
 
@@ -115,13 +118,14 @@ public class LaunchUtils {
         String applicationLauncher = versionPath.toString();
         ProcessBuilder builder = new ProcessBuilder();
 
-        logger.log(Level.INFO, "Путь к файлу запуска. ", applicationLauncher);
+        logger.log(Level.INFO, "Путь к файлу запуска: {0}", applicationLauncher);
         try {
             if (isWindows()) {
                 builder.command(applicationLauncher + "/launcher.exe");
                 builder.directory(new File(applicationLauncher));
                 builder.start();
             } else {
+                directoryUtils.setPermissionsOnDirectory(Paths.get(versionPath.toString(), "bin"), "rwxr-xr-x");
                 builder.command("sh", applicationLauncher + "/bin/ApplicationLauncher");
                 builder.directory(new File(applicationLauncher + "/bin"));
                 builder.start();
