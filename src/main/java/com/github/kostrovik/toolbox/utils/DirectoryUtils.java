@@ -1,23 +1,13 @@
 package com.github.kostrovik.toolbox.utils;
 
 import com.github.kostrovik.toolbox.models.Version;
+import com.github.kostrovik.useful.utils.FileSystemUtil;
 
-import java.io.File;
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.attribute.PosixFilePermissions;
-import java.util.Comparator;
-import java.util.Objects;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
 /**
  * project: toolbox
@@ -26,37 +16,11 @@ import java.util.stream.Stream;
  * github:  https://github.com/kostrovik/toolbox
  */
 public class DirectoryUtils {
-    private static Logger logger = ApplicationLogger.getLogger(DirectoryUtils.class.getName());
     private Pattern versionDirectoryPattern = Pattern.compile("version_[a-zA-Z_0-9\\-.]+");
+    private FileSystemUtil fsUtil;
 
-    public void copyDirectory(File source, File destination) {
-        if (source.isDirectory()) {
-            if (!destination.exists()) {
-                logger.log(Level.INFO, "Создание раздела. {0}", destination);
-                boolean created = destination.mkdir();
-                if (created) {
-                    logger.log(Level.INFO, "Раздел создан.");
-                } else {
-                    logger.log(Level.SEVERE, "Раздел не создан.");
-                }
-            }
-
-            String[] files = source.list();
-            if (Objects.nonNull(files)) {
-                for (String file : files) {
-                    File srcFile = new File(source, file);
-                    File destFile = new File(destination, file);
-                    copyDirectory(srcFile, destFile);
-                }
-            }
-        } else {
-            try {
-                Files.copy(source.toPath(), destination.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                logger.log(Level.INFO, "Файл скопирован. {0}", destination);
-            } catch (IOException e) {
-                logger.log(Level.SEVERE, "Файл не скопирован. ", e);
-            }
-        }
+    public DirectoryUtils() {
+        this.fsUtil = new FileSystemUtil();
     }
 
     public boolean hasVersionName(String directoryName) {
@@ -79,57 +43,15 @@ public class DirectoryUtils {
         return result && test == 0;
     }
 
-    public void removeTempDirectories(Path root) {
-        try (Stream<Path> testDir = Files.list(root)) {
-            testDir.forEach(path -> {
-                if (hasVersionName(path.toString())) {
-                    removeDirectories(path);
-                }
-            });
-        } catch (IOException e) {
-            logger.log(Level.SEVERE, "Ошибка удаления директории файла. ", e);
-        }
-    }
+    public Path getVersionsPath() throws IOException {
+        Path fileDirectory = fsUtil.getCurrentDirectory(DirectoryUtils.class);
 
-    private void removeDirectories(Path directory) {
-        if (Objects.nonNull(directory)) {
-            try (Stream<Path> filesStream = Files.walk(directory)) {
-                filesStream.sorted(Comparator.reverseOrder()).map(Path::toFile).forEach(File::delete);
-            } catch (IOException e) {
-                logger.log(Level.SEVERE, "Ошибка удаления директории или файла. ", e);
-            }
+        if (!fileDirectory.getParent().getFileName().toString().equalsIgnoreCase("versions")) {
+            Path versionsPath = Paths.get(fileDirectory.toString(), "versions");
+            fsUtil.createPath(versionsPath);
+            return versionsPath;
         }
-    }
 
-    public Path getVersionsPath() {
-        try {
-            URI fileDirectory = DirectoryUtils.class.getProtectionDomain().getCodeSource().getLocation().toURI();
-            Path rootPath;
-            if (Paths.get(fileDirectory).getParent().toString().equals("/")) {
-                fileDirectory = URI.create(System.getProperty("java.home"));
-                rootPath = Paths.get(fileDirectory.getPath());
-            } else {
-                rootPath = Paths.get(fileDirectory.getPath()).getParent();
-            }
-
-            return rootPath.getParent();
-        } catch (URISyntaxException e) {
-            logger.log(Level.SEVERE, "Ошибка поиска директории с версиями приложения.", e);
-        }
-        return null;
-    }
-
-    public void setPermissionsOnDirectory(Path directory, String pasixPermissions) {
-        try (Stream<Path> testDir = Files.list(directory)) {
-            testDir.forEach(path -> {
-                try {
-                    Files.setPosixFilePermissions(path, PosixFilePermissions.fromString(pasixPermissions));
-                } catch (IOException e) {
-                    logger.log(Level.SEVERE, "Ошибка установки прав для файла. ", e);
-                }
-            });
-        } catch (IOException e) {
-            logger.log(Level.SEVERE, "Ошибка чтения директории. ", e);
-        }
+        return fileDirectory.getParent();
     }
 }

@@ -23,6 +23,7 @@ dependencies {
     testRuntime("org.junit.jupiter:junit-jupiter-engine:5.2.0")
 
     compile 'com.github.kostrovik:http-client:1.0-SNAPSHOT'
+    compile 'com.github.kostrovik:useful-utils:1.0-SNAPSHOT'
 }
 
 configurations.all {
@@ -73,24 +74,4 @@ task copyToLib(type: Copy) {
 
 task sourceJar(type: Jar) {
     from sourceSets.main.allJava
-}
-
-/**
- * Задание на выгрузку артефакта в указанный репозиторий
- * */
-publishing {
-    repositories {
-        maven {
-            url artifactRepository
-        }
-    }
-    publications {
-        mavenJava(MavenPublication) {
-            from components.java
-
-            artifact sourceJar {
-                classifier "sources"
-            }
-        }
-    }
 }

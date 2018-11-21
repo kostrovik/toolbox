@@ -1,11 +1,11 @@
 package com.github.kostrovik.toolbox.utils;
 
 import com.github.kostrovik.toolbox.models.Version;
+import com.github.kostrovik.useful.utils.FileSystemUtil;
+import com.github.kostrovik.useful.utils.InstanceLocatorUtil;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -21,7 +21,12 @@ import java.util.logging.Logger;
  * github:  https://github.com/kostrovik/toolbox
  */
 public class SelfCheckerUtils {
-    private static Logger logger = ApplicationLogger.getLogger(SelfCheckerUtils.class.getName());
+    private static Logger logger = InstanceLocatorUtil.getLocator().getLogger(SelfCheckerUtils.class.getName());
+    private FileSystemUtil fsUtil;
+
+    public SelfCheckerUtils() {
+        this.fsUtil = new FileSystemUtil();
+    }
 
     /**
      * Ищет в корне приложения файл с версией. В случае если такой файл найден то читает из него первую строку.
@@ -33,10 +38,8 @@ public class SelfCheckerUtils {
      * @param actualVersion the actual version
      *
      * @return the boolean
-     *
-     * @throws URISyntaxException the uri syntax exception
      */
-    public boolean amIActual(Version actualVersion) throws URISyntaxException {
+    public boolean amIActual(Version actualVersion) {
         Path versionFile = getVersionFilePath();
         if (Objects.nonNull(versionFile) && Files.exists(versionFile)) {
             try (BufferedReader reader = Files.newBufferedReader(versionFile, Charset.forName("UTF-8"))) {
@@ -52,16 +55,8 @@ public class SelfCheckerUtils {
         return false;
     }
 
-    private Path getVersionFilePath() throws URISyntaxException {
-        URI fileDirectory = SelfCheckerUtils.class.getProtectionDomain().getCodeSource().getLocation().toURI();
-        Path versionConfigPath;
-        if (Paths.get(fileDirectory).getParent().toString().equals("/")) {
-            fileDirectory = URI.create(System.getProperty("java.home"));
-            versionConfigPath = Paths.get(fileDirectory.getPath());
-        } else {
-            versionConfigPath = Paths.get(fileDirectory.getPath()).getParent();
-        }
-
-        return Paths.get(versionConfigPath.toString(), "version.txt");
+    private Path getVersionFilePath() {
+        Path fileDirectory = fsUtil.getCurrentDirectory(SelfCheckerUtils.class);
+        return Paths.get(fileDirectory.toString(), "version.txt");
     }
 }

@@ -14,7 +14,7 @@ public class Version implements Comparable<Version> {
     private int major;
     private int minor;
     private int patch;
-    private static final Pattern versionPattern = Pattern.compile("([0-9]+)\\.([0-9]+)\\.([0-9]+)(.*)*");
+    private static final Pattern versionPattern = Pattern.compile("([0-9]+)[.\\-_]{1}([0-9]+)[.\\-_]{1}([0-9]+)(.*)*");
 
     public Version(int major, int minor, int patch) {
         this.major = major;
@@ -73,7 +73,11 @@ public class Version implements Comparable<Version> {
 
     @Override
     public String toString() {
-        return String.format("%d.%d.%d", major, minor, patch);
+        return toString("_");
+    }
+
+    public String toString(String separator) {
+        return String.join(separator, String.valueOf(major), String.valueOf(minor), String.valueOf(patch));
     }
 
     @Override
